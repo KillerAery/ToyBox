@@ -2,20 +2,18 @@
 
 ## 介绍
 
-使用C++编写的对lua库的简易封装库，方便C/C++与Lua交互。
+使用 C++ 编写的对 Lua 库的简易封装库，方便 C/C++ 与Lua交互。
 
-lua库版本：5.3.5
-
-编译平台：win32/x86 debug模式
+依赖 Lua 版本：5.3.6
 
 目前功能：
-- 支持string,int,double3个基本类型
-- 访问lua变量
-- 调用lua函数
-- lua调用C/C++函数
-- lua调用C/C++变量
+- 支持 string, int, double 3个基本类型
+- 访问 lua 变量
+- 调用 lua 函数
+- lua 调用 C/C++ 函数
+- lua 调用 C/C++ 变量
 
-> PS：并不包括C++类与对象与成员函数
+> PS：并不包括 C++ 类与对象与成员函数
 
 ## 用法
 
