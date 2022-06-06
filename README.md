@@ -1,5 +1,3 @@
-[toc]
-
 # LuaOpener
 
 ## 介绍
