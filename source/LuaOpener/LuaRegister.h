@@ -11,7 +11,7 @@ inline T getArgu(lua_State* l, int index) {
 
 template<>
 inline int getArgu<int>(lua_State* l,int index) {
-	int num = lua_tonumber(l, index);
+	int num = static_cast<int>(lua_tonumber(l, index));
 	return num;
 }
 

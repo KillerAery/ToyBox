@@ -11,34 +11,35 @@
 #include "Job.h"
 #include "LockfreeQueue.h"
 
+
 class ThreadPool
 {
 public:
 
-    explicit ThreadPool(int num) : _thread_num(num), _is_running(false), _len(0) {}
+    explicit ThreadPool(int num) : mNumThread(num), mIsRunning(false), mLen(0) {}
 
     ~ThreadPool() {
-        if (_is_running)
+        if (mIsRunning)
             stop();
     }
 
     void start() {
-        _is_running = true;
+        mIsRunning = true;
 
         //开启线程
-        for (int i = 0; i < _thread_num; ++i)
-            _threads.emplace_back(std::thread(&ThreadPool::work, this));
+        for (int i = 0; i < mNumThread; ++i)
+            mThreads.emplace_back(std::thread(&ThreadPool::work, this));
     }
 
     void stop() {
         {
             //因为有的线程可能处于阻塞状态,所以在回收线程之前保证所有线程均处于运行状态
-            std::unique_lock<std::mutex> lk(_mtx);
-            _is_running = false;
-            _cond.notify_all();
+            std::unique_lock<std::mutex> lk(mMtx);
+            mIsRunning = false;
+            mCV.notify_all();
         }
 
-        for (auto& thread : _threads) {
+        for (auto& thread : mThreads) {
             if (thread.joinable())
                 thread.join();
         }
@@ -46,66 +47,67 @@ public:
 
     //往任务队列添加任务
     void appendTask(Job* job) {
-        if (_is_running) {
-            _queue.push(job);
-            _len.fetch_add(1);
-            _cond.notify_one();
+        if (mIsRunning) {
+            mJobQueue.push(job);
+            mLen.fetch_add(1);
+            mCV.notify_one();
         }
     }
 
     template<class U>
     void setFinishFunc(U && func){
-        _finishedOneJob = std::forward<U>(func);
+        mFinishedOneJobDelegate = std::forward<U>(func);
     }
 
 private:
+
     //工作接口
     void work() {
-        while (_is_running)
+        while (mIsRunning)
         {
             // 从 Task Queue 中取出一个 task
             Job* task = takeOneTask();
-            if (task && task->func) task->func(); // do the task
-            if (_finishedOneJob)_finishedOneJob(task);
+            if (task && task->mFunc) task->mFunc(); // do the task
+            if (mFinishedOneJobDelegate)mFinishedOneJobDelegate(task);
         }
     }
 
     // 从 Task Queue 中取出队首的 task
     Job* takeOneTask()
     {
-        int len_old = _len.fetch_sub(1);
+        int lenOld = mLen.fetch_sub(1);
         // 非空时，取出一个队首 task
-        if (len_old > 0)
+        if (lenOld > 0)
         {
-            return _queue.pop();
+            return mJobQueue.pop();
         }
         // 队列为空时，等待 Main Thread 推送新的 task 后通知
-        else if (_is_running)
+        else if (mIsRunning)
         {
-            _len.fetch_add(1);	// 恢复原长度
-            std::unique_lock<std::mutex> lk(_mtx);
-            _cond.wait(lk);
+            mLen.fetch_add(1);	// 恢复原长度
+            std::unique_lock<std::mutex> lk(mMtx);
+            mCV.wait(lk);
         }
         return nullptr;
     }
+
 public:
-    // disable copy and assign construct
+
     ThreadPool(const ThreadPool&) = delete;
 
     ThreadPool& operator=(const ThreadPool& other) = delete;
 
 private:
-    std::mutex _mtx;
-    std::condition_variable _cond;
 
-    std::atomic_bool _is_running;
-    std::atomic<int> _len;
+    std::mutex mMtx;
+    std::condition_variable mCV;
+    std::atomic_bool mIsRunning;
+    std::atomic<int> mLen;
 
-    int _thread_num;
-    std::vector<std::thread> _threads;
+    int mNumThread;
+    std::vector<std::thread> mThreads;
 
-    LockFreeQueue<Job*> _queue;
+    LockFreeQueue<Job*> mJobQueue;
 
-    // 用于调用上层
-    std::function<void(Job*)> _finishedOneJob;
+    std::function<void(Job*)> mFinishedOneJobDelegate; // 用于调用上层
 };

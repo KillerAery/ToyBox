@@ -75,7 +75,6 @@ namespace TEST2 {
 	void testJobSystem()
 	{
 		std::cout << "|-------------------------- JobSystem Unit Test------------------------------------|" << std::endl;
-		std::atomic<unsigned int> head = 0xffffffffff;
 
 		JobSystem s(2);
 		s.Init();

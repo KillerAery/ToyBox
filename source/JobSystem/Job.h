@@ -8,21 +8,21 @@ using namespace std;
 struct Job
 {
 	Job() :
-		dependece(0)
+		mDependece(0)
 	{}
 
 	Job(const std::function<void()> & _func) :
-		func(_func),
-		dependece(0)
+		mFunc(_func),
+		mDependece(0)
 	{}
 
 	Job(Job&& job) noexcept :
-		func(std::move(job.func)),
-		children(std::move(job.children)),
-		dependece(job.dependece.load())
+		mFunc(std::move(job.mFunc)),
+		mChildren(std::move(job.mChildren)),
+		mDependece(job.mDependece.load())
 	{}
 
-	std::function<void()> func;
-	std::list<int> children;
-	atomic<int> dependece;
+	std::function<void()> mFunc;	// 作业函数
+	std::list<int> mChildren;		// 子作业
+	atomic<int> mDependece;			// 依赖计数
 };

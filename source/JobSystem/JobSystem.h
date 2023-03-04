@@ -9,7 +9,9 @@
 using namespace std;
 
 class JobSystem {
+
 public:
+
 	// 应根据 CPU 核心数（num）来创建线程池
 	JobSystem(int num);
 
@@ -26,15 +28,16 @@ public:
 
 	// 等待所有 Job 完成
 	void WaitJobs();
+
 private:
+
 	void FinishedOneJob(Job* job);
+
 private:
-	// 线程池
-	ThreadPool mThreadPool;
-	// Jobs
-	std::vector<Job> mJobs;
-	// 当前剩余 Job 数量
-	atomic<int> mCurrentJobsNum;
+
+	ThreadPool mThreadPool;			// 线程池
+	std::vector<Job> mJobs;			// Jobs
+	atomic<int> mCurrentJobsNum;	// 当前剩余 Job 数量
 
 	std::mutex mMtx;
 	condition_variable mWait;
